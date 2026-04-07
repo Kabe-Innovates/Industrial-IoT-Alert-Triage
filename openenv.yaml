@@ -1,0 +1,8 @@
+spec_version: 1
+name: industrial_iot_alert_triage
+type: space
+runtime: fastapi
+app: server.app:app
+port: 8000
+version: 0.1.0
+description: Industrial IoT alert triage environment with deterministic graders and OpenEnv reset/step/state APIs.

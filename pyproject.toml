@@ -1,0 +1,32 @@
+[project]
+name = "industrial-iot-alert-triage"
+version = "0.1.0"
+description = "OpenEnv environment for industrial IoT alert triage with deterministic tasks and graders"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "openenv-core>=0.2.0",
+  "fastapi>=0.104.0",
+  "uvicorn>=0.24.0",
+  "pydantic>=2.0.0",
+  "pyyaml>=6.0.0",
+  "openai>=1.0.0",
+]
+
+[project.scripts]
+server = "server.app:main"
+industrial-iot-env = "server.app:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["client", "models", "tasks", "graders", "inference"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["server*"]
+
+[dependency-groups]
+dev = ["pytest>=8.0.0"]
