@@ -2,8 +2,6 @@
 
 Deterministic OpenEnv benchmark for industrial telemetry alert triage.
 
-Repository: git@github.com:Kabe-Innovates/Industrial-IoT-Alert-Triage.git
-
 ## Overview
 
 This environment models Level 1 operations triage for telemetry alerts.
