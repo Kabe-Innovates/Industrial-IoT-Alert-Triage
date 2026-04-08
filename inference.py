@@ -31,37 +31,37 @@ MAX_TOTAL_REWARD = float(os.getenv("MAX_TOTAL_REWARD", str(MAX_STEPS)))
 DECISION_RE = re.compile(r"\b([012])\b")
 
 
-def _emit(tag: str, fields: dict[str, Any]) -> None:
-    # Keep stdout parser-safe: only structured records are emitted.
-    print(f"[{tag}] {json.dumps(fields, separators=(',', ':'))}", flush=True)
+def _as_lower_bool(value: bool) -> str:
+    return "true" if value else "false"
+
+
+def _format_error(error: str | None) -> str:
+    return "null" if error is None else error
+
+
+def _format_rewards(rewards: list[float]) -> str:
+    return ",".join(f"{value:.2f}" for value in rewards)
+
+
+def _emit(message: str) -> None:
+    print(message, flush=True)
 
 
 def log_start(task: str, env: str, model: str) -> None:
-    _emit("START", {"task": task, "env": env, "model": model})
+    _emit(f"[START] task={task} env={env} model={model}")
 
 
 def log_step(step: int, action: int, reward: float, done: bool, error: str | None) -> None:
     _emit(
-        "STEP",
-        {
-            "step": step,
-            "action": action,
-            "reward": round(reward, 6),
-            "done": done,
-            "error": error,
-        },
+        f"[STEP] step={step} action={action} reward={reward:.2f} "
+        f"done={_as_lower_bool(done)} error={_format_error(error)}"
     )
 
 
 def log_end(success: bool, steps: int, score: float, rewards: list[float]) -> None:
     _emit(
-        "END",
-        {
-            "success": success,
-            "steps": steps,
-            "score": round(score, 6),
-            "rewards": [round(value, 6) for value in rewards],
-        },
+        f"[END] success={_as_lower_bool(success)} steps={steps} "
+        f"score={score:.3f} rewards={_format_rewards(rewards)}"
     )
 
 
