@@ -1,3 +1,13 @@
+---
+title: Industrial Iot Alert Triage
+emoji: ⚡
+colorFrom: gray
+colorTo: pink
+sdk: docker
+app_port: 8000
+pinned: false
+---
+
 # Industrial IoT Alert Triage
 
 Deterministic OpenEnv benchmark for industrial telemetry alert triage in real-world manufacturing and infrastructure operations.
