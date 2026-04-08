@@ -4,6 +4,7 @@ emoji: ⚡
 colorFrom: gray
 colorTo: pink
 sdk: docker
+app_port: 8000
 pinned: false
 ---
 
