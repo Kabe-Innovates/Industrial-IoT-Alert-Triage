@@ -11,24 +11,44 @@ find_free_port() {
   python - "$preferred" <<'PY'
 import socket
 import sys
+import random
 
 preferred = int(sys.argv[1])
-candidates = [preferred] if preferred > 0 else []
-candidates.extend(range(18000, 18200))
 
-for port in candidates:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+
+def port_available(port: int) -> bool:
+  candidates = [
+    (socket.AF_INET, ("0.0.0.0", port)),
+    (socket.AF_INET6, ("::", port)),
+  ]
+  sockets = []
+  try:
+    for family, address in candidates:
+      try:
+        sock = socket.socket(family, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        try:
-            sock.bind(("127.0.0.1", port))
-            print(port)
-            raise SystemExit(0)
-        except OSError:
-            continue
+        sock.bind(address)
+        sockets.append(sock)
+      except OSError:
+        return False
+    return True
+  finally:
+    for sock in sockets:
+      sock.close()
+
+
+if preferred > 0 and port_available(preferred):
+  print(preferred)
+  raise SystemExit(0)
+
+for port in list(range(18000, 18200)) + random.sample(range(20000, 25000), 100):
+  if port_available(port):
+    print(port)
+    raise SystemExit(0)
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-    sock.bind(("127.0.0.1", 0))
-    print(sock.getsockname()[1])
+  sock.bind(("0.0.0.0", 0))
+  print(sock.getsockname()[1])
 PY
 }
 
@@ -61,7 +81,8 @@ docker build -t "$IMAGE_NAME" "$REPO_DIR" >/tmp/openenv_docker_build.log 2>&1 ||
 log "PASS: docker build"
 
 log "Step 2/5: run container + /health"
-CID="$(docker run -d -p "${HOST_PORT}:8000" "$IMAGE_NAME")"
+CID="$(docker run -d -P "$IMAGE_NAME")"
+HOST_PORT="$(docker port "$CID" 8000/tcp | awk -F: 'NR==1{print $NF}')"
 cleanup() {
   docker rm -f "$CID" >/dev/null 2>&1 || true
 }
