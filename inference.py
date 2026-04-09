@@ -15,8 +15,8 @@ from client import IndustrialIotAlertTriageEnv
 from models import AlertAction
 from tasks import ALL_TASKS
 
-API_BASE_URL = os.getenv("API_BASE_URL")
-MODEL_NAME = os.getenv("MODEL_NAME")
+API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4.1-mini")
 HF_TOKEN = os.getenv("HF_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or HF_TOKEN
 API_KEY = OPENAI_API_KEY
@@ -109,17 +109,7 @@ def _extract_decision(model_message: str) -> int:
 
 
 async def main() -> None:
-    missing: list[str] = []
-    if not API_BASE_URL:
-        missing.append("API_BASE_URL")
-    if not MODEL_NAME:
-        missing.append("MODEL_NAME")
-    if not HF_TOKEN and not os.getenv("OPENAI_API_KEY"):
-        missing.append("HF_TOKEN or OPENAI_API_KEY")
-    if missing:
-        raise SystemExit(f"Missing required env vars: {', '.join(missing)}")
-
-    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY or "dummy-key")
 
     task_names = [task.name for task in ALL_TASKS] if INFERENCE_MODE == "multi" else [TASK_NAME]
 
