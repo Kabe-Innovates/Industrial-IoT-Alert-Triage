@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Callable, Iterable
 
 from models import AlertAction, AlertState, RewardSignal
-from tasks import GradedTask
+from tasks import ALL_TASKS, GradedTask
 
 
 @dataclass(frozen=True)
@@ -84,3 +84,9 @@ def summarize_scores(scores: Iterable[float]) -> float:
     if not values:
         return 0.0
     return max(0.0, min(1.0, sum(values) / len(values)))
+
+
+# Explicit task-to-grader mapping for validator discoverability.
+GRADER_REGISTRY: dict[str, Callable[[GradedTask, AlertState, AlertAction, int], GraderResult]] = {
+    task.name: grade_step for task in ALL_TASKS
+}

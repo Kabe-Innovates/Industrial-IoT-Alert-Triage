@@ -13,6 +13,7 @@ from tasks import ALL_TASKS, GradedTask
 class IndustrialIotAlertTriageEnvironment(Environment[AlertAction, AlertObservation, AlertState]):
     def __init__(self, task_name: str | None = None):
         self._task_index = 0
+        self._fixed_task_name = task_name
         self._task = self._select_task(task_name)
         self._state = self._new_state()
         self._current_sample_index = 0
@@ -24,7 +25,10 @@ class IndustrialIotAlertTriageEnvironment(Environment[AlertAction, AlertObservat
             for task in ALL_TASKS:
                 if task.name == task_name:
                     return task
-        return ALL_TASKS[self._task_index]
+        return ALL_TASKS[self._task_index % len(ALL_TASKS)]
+
+    def _task_catalog(self) -> list[dict[str, str]]:
+        return [{"name": task.name, "difficulty": task.difficulty} for task in ALL_TASKS]
 
     def _new_state(self) -> AlertState:
         return AlertState(
@@ -69,11 +73,22 @@ class IndustrialIotAlertTriageEnvironment(Environment[AlertAction, AlertObservat
             info={
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "expected_actions": list(self._task.expected_actions),
+                "active_task": self._task.name,
+                "available_tasks": [task.name for task in ALL_TASKS],
+                "task_catalog": self._task_catalog(),
             },
         )
         return obs
 
     def reset(self) -> AlertObservation:
+        # If TASK_NAME is not pinned, rotate tasks across episodes so validators can
+        # discover and grade all registered tasks deterministically.
+        if self._fixed_task_name:
+            self._task = self._select_task(self._fixed_task_name)
+        else:
+            self._task = ALL_TASKS[self._task_index % len(ALL_TASKS)]
+            self._task_index = (self._task_index + 1) % len(ALL_TASKS)
+
         self._state = self._new_state()
         self._current_sample_index = 0
         self._history.clear()
@@ -123,7 +138,14 @@ class IndustrialIotAlertTriageEnvironment(Environment[AlertAction, AlertObservat
             reward_signal=result.reward_signal,
             done=done,
             reward=reward_value,
-            info={"task": self._task.name, "difficulty": self._task.difficulty},
+            info={
+                "task": self._task.name,
+                "difficulty": self._task.difficulty,
+                "active_task": self._task.name,
+                "available_tasks": [task.name for task in ALL_TASKS],
+                "task_catalog": self._task_catalog(),
+                "expected_actions": list(self._task.expected_actions),
+            },
         )
         return self._last_observation
 
