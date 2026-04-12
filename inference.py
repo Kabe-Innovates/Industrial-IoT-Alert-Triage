@@ -20,7 +20,8 @@ MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4.1-mini")
 HF_TOKEN = os.getenv("HF_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or HF_TOKEN
 API_KEY = OPENAI_API_KEY
-IMAGE_NAME = os.getenv("IMAGE_NAME", "industrial-iot-alert-triage:latest")
+LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
+IMAGE_NAME = os.getenv("IMAGE_NAME") or LOCAL_IMAGE_NAME or "industrial-iot-alert-triage:latest"
 BENCHMARK = os.getenv("BENCHMARK", "industrial_iot_alert_triage")
 TASK_NAME = os.getenv("TASK_NAME", ALL_TASKS[0].name)
 INFERENCE_MODE = os.getenv("INFERENCE_MODE", "single").strip().lower()
@@ -80,7 +81,7 @@ def get_model_message(client: OpenAI, sample_text: str, history: list[str]) -> s
         text = (response.choices[0].message.content or "").strip()
         return text or "0"
     except Exception as exc:
-        print(f"[DEBUG] Model request failed: {exc}", flush=True)
+        print(f"[DEBUG] Model request failed: {exc}", file=sys.stderr, flush=True)
         return "hello"
 
 
@@ -178,7 +179,7 @@ async def main() -> None:
                     if inspect.isawaitable(close_result):
                         await close_result
                 except Exception as e:
-                    print(f"[DEBUG] env.close() error (container cleanup): {e}", flush=True)
+                    print(f"[DEBUG] env.close() error (container cleanup): {e}", file=sys.stderr, flush=True)
 
     overall = sum(task_scores) / len(task_scores) if task_scores else 0.0
     overall = min(max(overall, 0.0), 1.0)
