@@ -7,7 +7,7 @@ import json
 import os
 import re
 import sys
-from typing import Any, List
+from typing import List
 
 from openai import OpenAI
 
@@ -66,7 +66,10 @@ def log_end(success: bool, steps: int, score: float, rewards: list[float]) -> No
     )
 
 
-def get_model_message(client: OpenAI, sample_text: str, history: list[str]) -> str:
+def get_model_message(client: OpenAI | None, sample_text: str, history: list[str]) -> str:
+    if client is None:
+        return "0"
+
     messages = [
         {"role": "system", "content": "You are an expert industrial diagnostic engineer. Reply with a single digit 0, 1, or 2 and a short rationale."},
         {"role": "user", "content": sample_text + "\n\nHistory:\n" + "\n".join(history[-4:])},
@@ -86,7 +89,7 @@ def get_model_message(client: OpenAI, sample_text: str, history: list[str]) -> s
 
 
 def get_model_message_for_step(
-    client: OpenAI,
+    client: OpenAI | None,
     step: int,
     last_snapshot: str,
     last_reward: float,
@@ -110,7 +113,9 @@ def _extract_decision(model_message: str) -> int:
 
 
 async def main() -> None:
-    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY or "dummy-key")
+    client: OpenAI | None = None
+    if API_KEY:
+        client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
     task_names = [task.name for task in ALL_TASKS] if INFERENCE_MODE == "multi" else [TASK_NAME]
 
